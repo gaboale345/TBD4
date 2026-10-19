@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Práctica DML/TCL en PostgreSQL • UPDS</title>
+  <meta name="description" content="Presentación interactiva para la Práctica de Manipulación y Control Transaccional DML/TCL en PostgreSQL. Universidad Privada Domingo Savio.">
+  
+  <!-- Google Fonts: Inter, Outfit, JetBrains Mono, Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       VARIABLES Y SISTEMA DE DISEÑO (CSS CUSTOM PROPERTIES)
+       Estética Developer / Tech Premium: Glassmorphism + Terminal Moderna
+       ========================================================================== */
+    :root {
+      /* Tema Oscuro por Defecto */
+      --bg-gradient: radial-gradient(circle at 15% 15%, #0f1c3f 0%, #080d1a 45%, #04060d 100%);
+      --bg-primary: #070b14;
+      --bg-surface: rgba(15, 23, 42, 0.75);
+      --bg-surface-elevated: rgba(30, 41, 59, 0.85);
+      --bg-glass: rgba(15, 23, 42, 0.65);
+      --bg-code: #0b1120;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(56, 189, 248, 0.5);
+      --border-accent: rgba(0, 242, 254, 0.35);
+
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      /* Acentos PostgreSQL y Neón */
+      --accent-postgres: #336791;
+      --accent-cyan: #38bdf8;
+      --accent-cyan-glow: rgba(56, 189, 248, 0.3);
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.3);
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #a855f7;
+
+      /* Sombras y Glassmorphism */
+      --glass-blur: blur(16px);
+      --glass-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-subtle);
+      --neon-glow: 0 0 20px rgba(56, 189, 248, 0.25);
+      
+      /* Tipografía */
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      
+      --transition-smooth: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    [data-theme="light"] {
+      --bg-gradient: radial-gradient(circle at 10% 10%, #e0f2fe 0%, #f1f5f9 50%, #e2e8f0 100%);
+      --bg-primary: #f8fafc;
+      --bg-surface: rgba(255, 255, 255, 0.85);
+      --bg-surface-elevated: rgba(255, 255, 255, 0.95);
+      --bg-glass: rgba(255, 255, 255, 0.7);
+      --bg-code: #0f172a;
+      
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-focus: rgba(2, 132, 199, 0.6);
+      --border-accent: rgba(2, 132, 199, 0.3);
+
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+
+      --accent-postgres: #1d4ed8;
+      --accent-cyan: #0284c7;
+      --accent-cyan-glow: rgba(2, 132, 199, 0.2);
+      --accent-emerald: #059669;
+      --accent-emerald-glow: rgba(5, 150, 105, 0.2);
+      --accent-amber: #d97706;
+      --accent-rose: #e11d48;
+      --accent-purple: #7c3aed;
+
+      --glass-blur: blur(14px);
+      --glass-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 0 0 1px var(--border-subtle);
+      --neon-glow: 0 0 20px rgba(2, 132, 199, 0.15);
+    }
+
+    /* ==========================================================================
+       RESET Y BASE
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      background-image: var(--bg-gradient);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Fondo de malla de terminal interactiva con partículas sutiles */
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-cyan-glow) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(80px);
+      opacity: 0.6;
+      transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ambient-glow-1 { top: -200px; left: -150px; }
+    .ambient-glow-2 { bottom: -250px; right: -150px; background: radial-gradient(circle, var(--accent-emerald-glow) 0%, transparent 70%); }
+
+    /* ==========================================================================
+       CONTENEDOR DE LA PRESENTACIÓN (SLIDE DECK)
+       ========================================================================== */
+    .deck-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 1;
+      padding: 1.25rem 2rem 1.5rem 2rem;
+    }
+
+    /* Header Superior */
+    .deck-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 1.2rem;
+      background: var(--bg-glass);
+      backdrop-filter: var(--glass-blur);
+      border-radius: 9999px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--glass-shadow);
+      z-index: 10;
+      gap: 1rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #336791 0%, #00f2fe 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      box-shadow: 0 0 12px var(--accent-cyan-glow);
+    }
+
+    .brand-titles {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-heading);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .header-tags {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .tech-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .tech-pill.emerald {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--accent-emerald);
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      outline: none;
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-surface-elevated);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan-glow);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+    }
+
+    /* ==========================================================================
+       CANVAS DE SLIDES
+       ========================================================================== */
+    .slide-viewport {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      margin: 1rem 0;
+      perspective: 1000px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-surface);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      box-shadow: var(--glass-shadow);
+      padding: 2.2rem 2.8rem;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(40px) scale(0.98);
+      transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-accent) transparent;
+    }
+
+    .slide::-webkit-scrollbar {
+      width: 6px;
+    }
+    .slide::-webkit-scrollbar-thumb {
+      background: var(--border-accent);
+      border-radius: 4px;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0) scale(1);
+      z-index: 2;
+    }
+
+    .slide.prev-slide {
+      transform: translateX(-40px) scale(0.98);
+    }
+
+    /* Encabezado interno de cada Slide */
+    .slide-title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1rem;
+    }
+
+    .slide-title-group {
+      max-width: 80%;
+    }
+
+    .slide-category {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slide-category::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    .slide-h2 {
+      font-family: var(--font-heading);
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .slide-lead {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      line-height: 1.45;
+    }
+
+    /* Layouts en rejilla (Grid) de contenido */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 1.8rem;
+      align-items: stretch;
+      flex: 1;
+    }
+
+    .grid-2col-equal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.6rem;
+      flex: 1;
+    }
+
+    .grid-3col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.4rem;
+      flex: 1;
+    }
+
+    .grid-4col {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.2rem;
+      flex: 1;
+    }
+
+    /* Tarjetas de Contenido Estilizadas */
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.4rem;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      border-color: var(--border-accent);
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.9rem;
+    }
+
+    .card-icon.emerald { background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald); }
+    .card-icon.amber { background: rgba(245, 158, 11, 0.1); color: var(--accent-amber); }
+    .card-icon.rose { background: rgba(244, 63, 94, 0.1); color: var(--accent-rose); }
+    .card-icon.purple { background: rgba(168, 85, 247, 0.1); color: var(--accent-purple); }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    /* ==========================================================================
+       EDITOR DE CÓDIGO SQL (TERMINAL LOOK CON RESALTADO)
+       ========================================================================== */
+    .code-terminal {
+      background: var(--bg-code);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .terminal-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 1rem;
+      background: rgba(0, 0, 0, 0.35);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .terminal-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .term-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .term-dot.red { background: #ff5f56; }
+    .term-dot.yellow { background: #ffbd2e; }
+    .term-dot.green { background: #27c93f; }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-copy:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-copy.copied {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+    }
+
+    .code-body {
+      padding: 1rem 1.2rem;
+      overflow-y: auto;
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      tab-size: 2;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-accent) transparent;
+    }
+
+    /* Sintaxis SQL Resaltada */
+    .sql-kw { color: #38bdf8; font-weight: 600; } /* SELECT, INSERT, UPDATE, DELETE, BEGIN, COMMIT */
+    .sql-tcl { color: #ec4899; font-weight: 700; text-shadow: 0 0 10px rgba(236,72,153,0.3); } /* BEGIN, COMMIT, ROLLBACK, SAVEPOINT */
+    .sql-fn { color: #fbbf24; } /* ROUND, AVG, SUM, COALESCE, EXISTS */
+    .sql-tbl { color: #34d399; font-weight: 600; } /* nombres de tablas */
+    .sql-str { color: #f472b6; } /* cadenas de texto 'Texto' */
+    .sql-num { color: #a78bfa; } /* números 10, 20.00 */
+    .sql-cm { color: #64748b; font-style: italic; } /* comentarios -- */
+    .sql-col { color: #cbd5e1; } /* columnas */
+
+    /* ==========================================================================
+       ESPACIOS PARA IMÁGENES / PANTALLAZOS DE PGADMIN 4
+       Con Contenedor Punteado + Switch para Simulación de Datos Reales del PDF
+       ========================================================================== */
+    .image-placeholder-box {
+      border: 2px dashed rgba(56, 189, 248, 0.35);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+      min-height: 220px;
+      transition: var(--transition-smooth);
+    }
+
+    .image-placeholder-box:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(15, 23, 42, 0.6);
+      box-shadow: inset 0 0 25px rgba(56, 189, 248, 0.08);
+    }
+
+    .ph-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.8rem;
+    }
+
+    .ph-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    .ph-title {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.35rem;
+    }
+
+    .ph-description {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      max-width: 90%;
+      line-height: 1.4;
+      margin-bottom: 0.8rem;
+    }
+
+    .ph-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    .ph-btn {
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: var(--transition-smooth);
+    }
+
+    .ph-btn:hover {
+      background: var(--accent-cyan);
+      color: #0b1120;
+      border-color: var(--accent-cyan);
+    }
+
+    .custom-img-preview {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      z-index: 5;
+      display: none;
+    }
+
+    /* Tabla pgAdmin Simulada (Data Output exacto del PDF) */
+    .pgadmin-table-container {
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #0d1527;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      margin-top: 0.6rem;
+      display: none; /* Se activa con el botón */
+      text-align: left;
+    }
+
+    .pgadmin-table-container.visible {
+      display: block;
+    }
+
+    .pgadmin-header {
+      background: #1e293b;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .pgadmin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .pgadmin-table th {
+      background: #131d33;
+      color: #93c5fd;
+      padding: 0.4rem 0.6rem;
+      font-weight: 600;
+      font-size: 0.68rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .pgadmin-table th span {
+      display: block;
+      font-size: 0.58rem;
+      color: var(--text-dim);
+      font-weight: 400;
+    }
+
+    .pgadmin-table td {
+      padding: 0.35rem 0.6rem;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      border-right: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .pgadmin-table tr:hover {
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .pgadmin-table .row-num {
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.2);
+      width: 24px;
+      text-align: center;
+    }
+
+    /* ==========================================================================
+       BARRA INFERIOR DE NAVEGACIÓN
+       ========================================================================== */
+    .deck-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      z-index: 10;
+    }
+
+    /* Barra de Progreso Superior */
+    .progress-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 6.66%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-emerald));
+      border-radius: 9999px;
+      box-shadow: 0 0 10px var(--accent-cyan);
+      transition: width 0.35s ease;
+    }
+
+    .footer-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1.2rem;
+      background: var(--bg-glass);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-subtle);
+      border-radius: 9999px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .nav-btn-group {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .nav-btn {
+      padding: 0.45rem 1.1rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: var(--font-heading);
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: var(--transition-smooth);
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg-surface-elevated);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 12px var(--accent-cyan-glow);
+      transform: translateY(-1px);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .nav-btn.primary {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(16, 185, 129, 0.2));
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    .nav-btn.primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-emerald));
+      color: #0b1120;
+    }
+
+    .slide-counter-badge {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0.3rem 0.8rem;
+      border-radius: 9999px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-subtle);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .slide-counter-badge:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .keyboard-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    .key-badge {
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       MODAL DE VISTA GENERAL (GRID DE DIAPOSITIVAS / OVERVIEW)
+       ========================================================================== */
+    .overview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 7, 15, 0.85);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .overview-modal.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .overview-content {
+      width: 100%;
+      max-width: 1200px;
+      max-height: 85vh;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-focus);
+      border-radius: 24px;
+      padding: 2rem;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1rem;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .overview-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .overview-card:hover, .overview-card.active-thumb {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.12);
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px var(--accent-cyan-glow);
+    }
+
+    .overview-card-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    .overview-card-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    /* Modal de Ayuda / Atajos */
+    .help-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 7, 15, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 101;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .help-modal.open {
+      display: flex;
+    }
+
+    .help-content {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-focus);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .shortcuts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1.2rem;
+    }
+
+    .shortcut-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       ESTILOS ESPECÍFICOS DE DIAPOSITIVAS
+       ========================================================================== */
+    
+    /* Portada (Slide 1) */
+    .cover-slide {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .univ-emblem-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 9999px;
+      background: rgba(51, 103, 145, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-cyan);
+      font-family: var(--font-heading);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 20px var(--accent-cyan-glow);
+    }
+
+    .cover-main-title {
+      font-family: var(--font-heading);
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.04em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan) 80%, var(--accent-emerald) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      max-width: 950px;
+    }
+
+    .cover-sub {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin-bottom: 2.2rem;
+      line-height: 1.5;
+    }
+
+    .meta-cards-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+      width: 100%;
+      max-width: 980px;
+      text-align: left;
+    }
+
+    .meta-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+    }
+
+    .meta-card-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-cyan);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      margin-bottom: 0.3rem;
+    }
+
+    .meta-card-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .meta-card-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Tablas Relacionales y Diagramas */
+    .table-schema-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #93c5fd;
+    }
+
+    /* Tooltips y Notificaciones Toast */
+    .toast-notification {
+      position: fixed;
+      bottom: 5rem;
+      right: 2rem;
+      background: #10b981;
+      color: #0b1120;
+      padding: 0.6rem 1.2rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: var(--transition-smooth);
+      pointer-events: none;
+    }
+
+    .toast-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .deck-container { padding: 1rem; }
+      .grid-2col, .grid-2col-equal { grid-template-columns: 1fr; }
+      .cover-main-title { font-size: 2.2rem; }
+      .meta-cards-container { grid-template-columns: 1fr; }
+      .slide { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Elementos de Iluminación Ambiental (Mesh Glow) -->
+  <div class="ambient-glow ambient-glow-1"></div>
+  <div class="ambient-glow ambient-glow-2"></div>
+
+  <!-- Contenedor Principal de la Presentación -->
+  <div class="deck-container">
+    
+    <!-- HEADER SUPERIOR -->
+    <header class="deck-header">
+      <div class="brand-group">
+        <div class="brand-logo">PG</div>
+        <div class="brand-titles">
+          <span class="brand-title">UPDS • Actividad Académica IV</span>
+          <span class="brand-subtitle">Manipulación y Control Transaccional DML/TCL</span>
+        </div>
+      </div>
+
+      <div class="header-tags">
+        <span class="tech-pill">PostgreSQL 16</span>
+        <span class="tech-pill emerald">pgAdmin 4</span>
+        <span class="tech-pill" style="color:var(--accent-purple); border-color:rgba(168,85,247,0.3); background:rgba(168,85,247,0.1);">ACID Compliant</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Botón Ver Resumen de Diapositivas (Overview Grid) -->
+        <button class="icon-btn" id="btnOverview" title="Ver cuadrícula de diapositivas (Tecla: M)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        </button>
+
+        <!-- Botón Atajos de Teclado -->
+        <button class="icon-btn" id="btnHelp" title="Atajos de teclado (Tecla: H)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
+        <!-- Botón Toggle Modo Claro / Oscuro -->
+        <button class="icon-btn" id="btnThemeToggle" title="Cambiar Tema (Tecla: T)">
+          <svg id="themeIcon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </button>
+
+        <!-- Botón Pantalla Completa -->
+        <button class="icon-btn" id="btnFullscreen" title="Pantalla completa (Tecla: F)">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEWPORT DE SLIDES (15 DIAPOSITIVAS) -->
+    <main class="slide-viewport">
+
+      <!-- ==============================================================
+           SLIDE 1: PORTADA
+           ============================================================== -->
+      <section class="slide cover-slide active" data-index="1" data-title="Portada Principal">
+        <div class="univ-emblem-badge">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3v18M3 12h18M7.5 7.5l9 9M16.5 7.5l-9 9"/>
+          </svg>
+          UNIVERSIDAD PRIVADA DOMINGO SAVIO • FACULTAD DE INGENIERÍA
+        </div>
+        
+        <h1 class="cover-main-title">Práctica de Manipulación y Control Transaccional DML/TCL</h1>
+        <p class="cover-sub">Gestión robusta de transacciones, subconsultas correlacionadas y preservación de la integridad referencial en PostgreSQL bajo Windows.</p>
+
+        <div class="meta-cards-container">
+          <div class="meta-card">
+            <div class="meta-card-label">Autores / Estudiantes</div>
+            <div class="meta-card-value">Adriana Rodríguez Sotelo</div>
+            <div class="meta-card-value" style="margin-top: 0.2rem;">Gabriel Kevin Alcon Maydana</div>
+            <div class="meta-card-sub">Carrera: Ingeniería de Sistemas</div>
+          </div>
+
+          <div class="meta-card">
+            <div class="meta-card-label">Docente y Autoridades</div>
+            <div class="meta-card-value">Ing. Pablo Moscoso Zeballos</div>
+            <div class="meta-card-sub">Vicerrector: MSc. José Antonio Landriel P.</div>
+            <div class="meta-card-sub">Decano: MSc. Wilmer Campos Saavedra</div>
+          </div>
+
+          <div class="meta-card">
+            <div class="meta-card-label">Contexto Académico</div>
+            <div class="meta-card-value">Actividad Académica IV</div>
+            <div class="meta-card-sub">Santa Cruz de la Sierra – Bolivia</div>
+            <div class="meta-card-sub">Fecha: 19 de octubre de 2026</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 2: INTRODUCCIÓN Y OBJETIVOS
+           ============================================================== -->
+      <section class="slide" data-index="2" data-title="Introducción y Objetivos">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Fundamentación de la Práctica</div>
+            <h2 class="slide-h2">Introducción y Objetivos del Proyecto</h2>
+            <p class="slide-lead">Por qué la manipulación sin control transaccional compromete la integridad del negocio.</p>
+          </div>
+          <span class="tech-pill emerald">Visión Global</span>
+        </div>
+
+        <div class="grid-2col-equal">
+          <div class="card">
+            <div class="card-icon">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 class="card-title">Resumen e Introducción</h3>
+            <p class="card-text">
+              En cualquier aplicación transaccional de ventas, cada operación modifica múltiples entidades vinculadas: registrar la cabecera de la venta, detallar los ítems comercializados y descontar las existencias del inventario.
+            </p>
+            <p class="card-text" style="margin-top: 0.8rem;">
+              Si alguno de estos pasos falla a medio camino, <strong>no es admisible conservar estados parciales</strong> (por ejemplo, haber descontado existencias sin emitir la venta, o vender sin descontar stock). La combinación sinérgica entre sentencias <strong>DML</strong> y el control <strong>TCL</strong> garantiza la atomicidad absoluta de las operaciones.
+            </p>
+          </div>
+
+          <div class="card" style="border-color: rgba(16, 185, 129, 0.3);">
+            <div class="card-icon emerald">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 class="card-title">Objetivos Establecidos</h3>
+            <p class="card-text" style="margin-bottom: 0.75rem;">
+              <strong style="color:var(--text-main);">Objetivo General:</strong> Gestionar transacciones y manipular registros de ventas mediante subconsultas y sentencias DML seguras en PostgreSQL instalado en Windows.
+            </p>
+            <div class="card-text">
+              <strong style="color:var(--text-main);">Objetivos Específicos:</strong>
+              <ul style="padding-left: 1.2rem; margin-top: 0.4rem; line-height: 1.6;">
+                <li>Desplegar y aislar una base de datos de práctica (<code>actividad4_ventas</code>).</li>
+                <li>Aplicar sentencias <code>INSERT</code>, <code>UPDATE</code> y <code>DELETE</code> con cláusulas condicionales rigurosas.</li>
+                <li>Emplear subconsultas avanzadas (<code>NOT IN</code>, <code>EXISTS</code>, correlacionadas).</li>
+                <li>Dominar el control transaccional con <code>BEGIN</code>, <code>COMMIT</code>, <code>ROLLBACK</code> y <code>SAVEPOINT</code>.</li>
+                <li>Comprobar sistemáticamente los estados antes y después de cada cambio.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 3: CONCEPTOS CLAVE (DML & TCL)
+           ============================================================== -->
+      <section class="slide" data-index="3" data-title="Conceptos Clave DML/TCL">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Marco Teórico y Taxonomía SQL</div>
+            <h2 class="slide-h2">Conceptos Clave: DML vs TCL</h2>
+            <p class="slide-lead">DML transforma el estado de los datos; TCL decide si dicha transformación se hace irreversible o se descarta.</p>
+          </div>
+          <span class="tech-pill purple">Arquitectura ACID</span>
+        </div>
+
+        <div class="grid-4col">
+          <!-- INSERT -->
+          <div class="card">
+            <div class="card-icon">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">INSERT</h4>
+            <p class="card-text">Agrega nuevas tuplas a una tabla. Puede generar identificadores automáticamente con <code>IDENTITY</code> y devolver valores con <code>RETURNING</code>.</p>
+          </div>
+
+          <!-- UPDATE -->
+          <div class="card">
+            <div class="card-icon emerald">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">UPDATE</h4>
+            <p class="card-text">Modifica valores en registros preexistentes. Exige siempre una cláusula <code>WHERE</code> para evitar alteraciones accidentales masivas.</p>
+          </div>
+
+          <!-- DELETE -->
+          <div class="card">
+            <div class="card-icon rose">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">DELETE</h4>
+            <p class="card-text">Elimina registros bajo criterios específicos. Debe pre-validarse con <code>SELECT</code> previo para verificar cuántas filas serán afectadas.</p>
+          </div>
+
+          <!-- SELECT & Subconsultas -->
+          <div class="card">
+            <div class="card-icon amber">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">SELECT / Subconsulta</h4>
+            <p class="card-text">Inspecciona y proyecta datos sin mutarlos. Una subconsulta anidada permite filtrar o calcular parámetros de forma dinámica.</p>
+          </div>
+
+          <!-- BEGIN / COMMIT -->
+          <div class="card" style="border-color: rgba(56, 189, 248, 0.4);">
+            <div class="card-icon">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">BEGIN / COMMIT</h4>
+            <p class="card-text"><code>BEGIN</code> inicia el bloque de transacción aislada. <code>COMMIT</code> hace que todos los cambios sean definitivos y persistentes en disco.</p>
+          </div>
+
+          <!-- ROLLBACK -->
+          <div class="card" style="border-color: rgba(244, 63, 94, 0.4);">
+            <div class="card-icon rose">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">ROLLBACK</h4>
+            <p class="card-text">Anula y deshace todas las operaciones realizadas desde el <code>BEGIN</code>, restaurando la base de datos a su estado prístino previo.</p>
+          </div>
+
+          <!-- SAVEPOINT -->
+          <div class="card" style="border-color: rgba(168, 85, 247, 0.4);">
+            <div class="card-icon purple">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">SAVEPOINT</h4>
+            <p class="card-text">Crea un punto de control intermedio. Permite ejecutar <code>ROLLBACK TO SAVEPOINT</code> para corregir un fallo parcial sin abortar el resto.</p>
+          </div>
+
+          <!-- Entorno Windows -->
+          <div class="card" style="border-color: rgba(245, 158, 11, 0.4);">
+            <div class="card-icon amber">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <h4 class="card-title" style="font-size: 1rem;">Entorno pgAdmin 4</h4>
+            <p class="card-text">Ejecución en base de pruebas <code>actividad4_ventas</code> mediante el <em>Query Tool (F5)</em> con validación de servicios activos en Windows.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 4: CREACIÓN DE TABLAS (DDL)
+           ============================================================== -->
+      <section class="slide" data-index="4" data-title="Creación de Tablas">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Modelo Relacional DDL</div>
+            <h2 class="slide-h2">Creación de las Tablas Relacionales</h2>
+            <p class="slide-lead">Definición de claves primarias identity, restricciones CHECK y claves foráneas en cascada.</p>
+          </div>
+          <span class="tech-pill">Estructura de Datos</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">01_creacion_tablas.sql</div>
+              <button class="btn-copy" data-target="code-slide-4">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-4"><code><span class="sql-cm">-- 1. Tabla de Clientes</span>
+<span class="sql-kw">CREATE TABLE</span> <span class="sql-tbl">clientes</span> (
+  id_cliente <span class="sql-kw">INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  nombre <span class="sql-kw">VARCHAR</span>(<span class="sql-num">100</span>) <span class="sql-kw">NOT NULL</span>,
+  ciudad <span class="sql-kw">VARCHAR</span>(<span class="sql-num">60</span>) <span class="sql-kw">NOT NULL</span>
+);
+
+<span class="sql-cm">-- 2. Tabla de Productos con restricciones CHECK</span>
+<span class="sql-kw">CREATE TABLE</span> <span class="sql-tbl">productos</span> (
+  id_producto <span class="sql-kw">INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  nombre <span class="sql-kw">VARCHAR</span>(<span class="sql-num">100</span>) <span class="sql-kw">NOT NULL</span>,
+  precio <span class="sql-kw">NUMERIC</span>(<span class="sql-num">10</span>,<span class="sql-num">2</span>) <span class="sql-kw">NOT NULL CHECK</span> (precio > <span class="sql-num">0</span>),
+  stock <span class="sql-kw">INTEGER NOT NULL CHECK</span> (stock >= <span class="sql-num">0</span>)
+);
+
+<span class="sql-cm">-- 3. Cabecera de Ventas</span>
+<span class="sql-kw">CREATE TABLE</span> <span class="sql-tbl">ventas</span> (
+  id_venta <span class="sql-kw">INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  id_cliente <span class="sql-kw">INTEGER NOT NULL REFERENCES</span> <span class="sql-tbl">clientes</span>(id_cliente),
+  fecha <span class="sql-kw">DATE NOT NULL DEFAULT CURRENT_DATE</span>,
+  estado <span class="sql-kw">VARCHAR</span>(<span class="sql-num">20</span>) <span class="sql-kw">NOT NULL DEFAULT</span> <span class="sql-str">'REGISTRADA'</span>
+);
+
+<span class="sql-cm">-- 4. Detalle de Ventas</span>
+<span class="sql-kw">CREATE TABLE</span> <span class="sql-tbl">detalle_venta</span> (
+  id_detalle <span class="sql-kw">INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY</span>,
+  id_venta <span class="sql-kw">INTEGER NOT NULL REFERENCES</span> <span class="sql-tbl">ventas</span>(id_venta),
+  id_producto <span class="sql-kw">INTEGER NOT NULL REFERENCES</span> <span class="sql-tbl">productos</span>(id_producto),
+  cantidad <span class="sql-kw">INTEGER NOT NULL CHECK</span> (cantidad > <span class="sql-num">0</span>),
+  precio_unitario <span class="sql-kw">NUMERIC</span>(<span class="sql-num">10</span>,<span class="sql-num">2</span>) <span class="sql-kw">NOT NULL CHECK</span> (precio_unitario > <span class="sql-num">0</span>)
+);</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF (Árbol de pgAdmin 4) -->
+          <div class="image-placeholder-box" id="box-slide-4">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-4">
+            <img class="custom-img-preview" id="preview-slide-4" alt="Vista previa">
+            
+            <div class="ph-icon">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <span class="ph-badge">pgAdmin 4 • Object Explorer</span>
+            <h4 class="ph-title">[Espacio para Imagen: Árbol de tablas de pgAdmin 4]</h4>
+            <p class="ph-description">Captura del panel lateral de navegación en pgAdmin mostrando la sección <strong>Tables (4)</strong>: <code>clientes</code>, <code>detalle_venta</code>, <code>productos</code> y <code>ventas</code>.</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-4').click()">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                Insertar Captura
+              </button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-4')">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Ver Árbol Simulado
+              </button>
+            </div>
+
+            <!-- Árbol Simulado pgAdmin -->
+            <div class="pgadmin-table-container" id="table-sim-4">
+              <div class="pgadmin-header">
+                <span>Database: actividad4_ventas > Schemas > public</span>
+                <span>Tables (4)</span>
+              </div>
+              <div style="padding: 0.8rem; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;">
+                <div style="color: #93c5fd;">📁 Tables (4)</div>
+                <div style="padding-left: 1.2rem; color: #38bdf8;">├── 🗄️ clientes</div>
+                <div style="padding-left: 1.2rem; color: #38bdf8;">├── 🗄️ detalle_venta</div>
+                <div style="padding-left: 1.2rem; color: #38bdf8;">├── 🗄️ productos</div>
+                <div style="padding-left: 1.2rem; color: #38bdf8;">└── 🗄️ ventas</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 5: CARGA INICIAL DE DATOS
+           ============================================================== -->
+      <section class="slide" data-index="5" data-title="Carga Inicial de Datos">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Poblado Inicial de Tablas</div>
+            <h2 class="slide-h2">Carga Inicial y Comprobación con SELECT</h2>
+            <p class="slide-lead">Inserción de 3 clientes y 4 productos con identificadores autogenerados del 1 al 3 y del 1 al 4.</p>
+          </div>
+          <span class="tech-pill emerald">Estado Base</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">02_carga_inicial.sql</div>
+              <button class="btn-copy" data-target="code-slide-5">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-5"><code><span class="sql-cm">-- Inserción de 3 clientes iniciales</span>
+<span class="sql-kw">INSERT INTO</span> <span class="sql-tbl">clientes</span> (nombre, ciudad) <span class="sql-kw">VALUES</span>
+  (<span class="sql-str">'Ana Pérez'</span>, <span class="sql-str">'Santa Cruz'</span>),
+  (<span class="sql-str">'Luis Rojas'</span>, <span class="sql-str">'La Paz'</span>),
+  (<span class="sql-str">'María Flores'</span>, <span class="sql-str">'Santa Cruz'</span>);
+
+<span class="sql-cm">-- Inserción de 4 productos de catálogo con precios y stock</span>
+<span class="sql-kw">INSERT INTO</span> <span class="sql-tbl">productos</span> (nombre, precio, stock) <span class="sql-kw">VALUES</span>
+  (<span class="sql-str">'Teclado'</span>, <span class="sql-num">120.00</span>, <span class="sql-num">20</span>),
+  (<span class="sql-str">'Mouse'</span>, <span class="sql-num">80.00</span>, <span class="sql-num">30</span>),
+  (<span class="sql-str">'Monitor'</span>, <span class="sql-num">950.00</span>, <span class="sql-num">10</span>),
+  (<span class="sql-str">'Memoria USB'</span>, <span class="sql-num">60.00</span>, <span class="sql-num">25</span>);
+
+<span class="sql-cm">-- Verificación de estado ordenado por PK</span>
+<span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-tbl">clientes</span> <span class="sql-kw">ORDER BY</span> id_cliente;
+<span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">ORDER BY</span> id_producto;</code></pre>
+          </div>
+
+          <!-- Dos Espacios para Imágenes del PDF -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Imagen 1: Clientes -->
+            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+              <span class="ph-badge">pgAdmin 4 • Data Output</span>
+              <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Tabla Clientes]</h5>
+              <p class="ph-description" style="font-size: 0.72rem;">SELECT * FROM clientes ORDER BY id_cliente (Ana Pérez, Luis Rojas, María Flores).</p>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-5a')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Tabla Clientes</button>
+              
+              <div class="pgadmin-table-container" id="table-sim-5a">
+                <table class="pgadmin-table">
+                  <thead>
+                    <tr><th class="row-num">#</th><th>id_cliente<span>[PK] integer</span></th><th>nombre<span>character varying(100)</span></th><th>ciudad<span>character varying(60)</span></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="row-num">1</td><td>1</td><td>Ana Pérez</td><td>Santa Cruz</td></tr>
+                    <tr><td class="row-num">2</td><td>2</td><td>Luis Rojas</td><td>La Paz</td></tr>
+                    <tr><td class="row-num">3</td><td>3</td><td>María Flores</td><td>Santa Cruz</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Imagen 2: Productos -->
+            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+              <span class="ph-badge">pgAdmin 4 • Data Output</span>
+              <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Tabla Productos]</h5>
+              <p class="ph-description" style="font-size: 0.72rem;">SELECT * FROM productos (Teclado 120/20, Mouse 80/30, Monitor 950/10, Memoria USB 60/25).</p>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-5b')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Tabla Productos</button>
+              
+              <div class="pgadmin-table-container" id="table-sim-5b">
+                <table class="pgadmin-table">
+                  <thead>
+                    <tr><th class="row-num">#</th><th>id_producto<span>[PK] integer</span></th><th>nombre<span>character varying(100)</span></th><th>precio<span>numeric(10,2)</span></th><th>stock<span>integer</span></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="row-num">1</td><td>1</td><td>Teclado</td><td>120.00</td><td>20</td></tr>
+                    <tr><td class="row-num">2</td><td>2</td><td>Mouse</td><td>80.00</td><td>30</td></tr>
+                    <tr><td class="row-num">3</td><td>3</td><td>Monitor</td><td>950.00</td><td>10</td></tr>
+                    <tr><td class="row-num">4</td><td>4</td><td>Memoria USB</td><td>60.00</td><td>25</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 6: EJERCICIO 1 - REGISTRAR UNA VENTA CON COMMIT
+           ============================================================== -->
+      <section class="slide" data-index="6" data-title="Ejercicio 1: Venta con COMMIT">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 1 • Control Transaccional</div>
+            <h2 class="slide-h2">Registrar Venta Atómica con COMMIT</h2>
+            <p class="slide-lead">Uso de CTE y RETURNING para encadenar inserción de venta, detalle y rebaja de inventario.</p>
+          </div>
+          <span class="tech-pill">CTE + RETURNING</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio1_commit.sql</div>
+              <button class="btn-copy" data-target="code-slide-6">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-6"><code><span class="sql-tcl">BEGIN</span>;
+
+<span class="sql-cm">-- 1. Insertamos cabecera de venta capturando id_venta generado</span>
+<span class="sql-kw">WITH</span> <span class="sql-col">nueva_venta</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">INSERT INTO</span> <span class="sql-tbl">ventas</span> (id_cliente)
+  <span class="sql-kw">SELECT</span> id_cliente <span class="sql-kw">FROM</span> <span class="sql-tbl">clientes</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Ana Pérez'</span>
+  <span class="sql-kw">RETURNING</span> id_venta
+)
+<span class="sql-cm">-- 2. Insertamos el detalle asociando la venta y el producto</span>
+<span class="sql-kw">INSERT INTO</span> <span class="sql-tbl">detalle_venta</span> (id_venta, id_producto, cantidad, precio_unitario)
+<span class="sql-kw">SELECT</span> nv.id_venta, p.id_producto, <span class="sql-num">2</span>, p.precio
+<span class="sql-kw">FROM</span> <span class="sql-col">nueva_venta</span> nv <span class="sql-kw">CROSS JOIN</span> <span class="sql-tbl">productos</span> p
+<span class="sql-kw">WHERE</span> p.nombre = <span class="sql-str">'Teclado'</span>;
+
+<span class="sql-cm">-- 3. Actualizamos inventario de teclados (descuento de 2 unidades)</span>
+<span class="sql-kw">UPDATE</span> <span class="sql-tbl">productos</span> <span class="sql-kw">SET</span> stock = stock - <span class="sql-num">2</span>
+<span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Teclado'</span> <span class="sql-kw">AND</span> stock >= <span class="sql-num">2</span>;
+
+<span class="sql-tcl">COMMIT</span>;
+
+<span class="sql-kw">SELECT</span> nombre, stock <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Teclado'</span>;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-6">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-6">
+            <img class="custom-img-preview" id="preview-slide-6" alt="Vista previa">
+            
+            <div class="ph-icon">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span class="ph-badge">pgAdmin 4 • Data Output</span>
+            <h4 class="ph-title">[Espacio para Imagen: Venta id=1 y Stock Teclado = 18]</h4>
+            <p class="ph-description">Captura del PDF mostrando la venta de Ana Pérez (id_venta 1), detalle con 2 teclados a Bs 120 (total Bs 240) y stock reducido de 20 a 18.</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-6').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-6')">Ver Resultado Simulado</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-6">
+              <div class="pgadmin-header">
+                <span>Data Output: Ventas y Stock Actualizado</span>
+                <span>Rows: 1</span>
+              </div>
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th><th>stock<span>integer</span></th><th>estado<span>transacción</span></th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>Teclado</td><td>18</td><td style="color:var(--accent-emerald); font-weight:700;">COMMIT OK</td></tr>
+                </tbody>
+              </table>
+              <div style="padding: 0.5rem; font-size: 0.7rem; color: var(--accent-cyan); border-top: 1px solid rgba(255,255,255,0.05);">
+                * Venta #1 generada: 2 Teclados x Bs 120.00 = Total Bs 240.00
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 7: EJERCICIO 2 - ACTUALIZAR CON UNA SUBCONSULTA
+           ============================================================== -->
+      <section class="slide" data-index="7" data-title="Ejercicio 2: Subconsulta NOT IN">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 2 • Subconsultas DML</div>
+            <h2 class="slide-h2">Aumento de Precios con Subconsulta NOT IN</h2>
+            <p class="slide-lead">Incrementar un 10% el precio de aquellos productos que todavía no registran ventas.</p>
+          </div>
+          <span class="tech-pill emerald">Filtrado Dinámico</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio2_subconsulta.sql</div>
+              <button class="btn-copy" data-target="code-slide-7">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-7"><code><span class="sql-tcl">BEGIN</span>;
+
+<span class="sql-cm">-- Verificación del catálogo antes del cambio</span>
+<span class="sql-kw">SELECT</span> nombre, precio <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">ORDER BY</span> id_producto;
+
+<span class="sql-cm">-- Actualizamos con aumento del 10% solo a los no vendidos</span>
+<span class="sql-kw">UPDATE</span> <span class="sql-tbl">productos</span>
+<span class="sql-kw">SET</span> precio = <span class="sql-fn">ROUND</span>(precio * <span class="sql-num">1.10</span>, <span class="sql-num">2</span>)
+<span class="sql-kw">WHERE</span> id_producto <span class="sql-kw">NOT IN</span> (
+  <span class="sql-kw">SELECT</span> id_producto <span class="sql-kw">FROM</span> <span class="sql-tbl">detalle_venta</span>
+);
+
+<span class="sql-cm">-- Inspección del resultado esperado</span>
+<span class="sql-kw">SELECT</span> nombre, precio <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">ORDER BY</span> id_producto;
+
+<span class="sql-tcl">COMMIT</span>;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-7">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-7">
+            <img class="custom-img-preview" id="preview-slide-7" alt="Vista previa">
+            
+            <div class="ph-icon">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            </div>
+            <span class="ph-badge">pgAdmin 4 • Data Output</span>
+            <h4 class="ph-title">[Espacio para Imagen: Productos con +10%]</h4>
+            <p class="ph-description">Captura de la tabla de productos mostrando: Teclado sin cambios (Bs 120.00 porque sí tiene venta), Mouse (Bs 88.00), Monitor (Bs 1045.00) y Memoria USB (Bs 66.00).</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-7').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-7')">Ver Tabla Simulada</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-7">
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th><th>precio<span>numeric(10,2)</span></th><th>variación</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>Teclado</td><td>120.00</td><td style="color:var(--text-dim);">Sin cambio (Vendido)</td></tr>
+                  <tr><td class="row-num">2</td><td>Mouse</td><td>88.00</td><td style="color:var(--accent-emerald);">+10% (80 -> 88)</td></tr>
+                  <tr><td class="row-num">3</td><td>Monitor</td><td>1045.00</td><td style="color:var(--accent-emerald);">+10% (950 -> 1045)</td></tr>
+                  <tr><td class="row-num">4</td><td>Memoria USB</td><td>66.00</td><td style="color:var(--accent-emerald);">+10% (60 -> 66)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 8: EJERCICIO 3 - PROBAR ROLLBACK
+           ============================================================== -->
+      <section class="slide" data-index="8" data-title="Ejercicio 3: Probar ROLLBACK">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 3 • Tolerancia a Fallos</div>
+            <h2 class="slide-h2">Simulación de Error y Reversión con ROLLBACK</h2>
+            <p class="slide-lead">Comprobación de que las modificaciones dentro de un bloque transaccional no persisten si se abortan.</p>
+          </div>
+          <span class="tech-pill" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);">Reversión Total</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio3_rollback.sql</div>
+              <button class="btn-copy" data-target="code-slide-8">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-8"><code><span class="sql-tcl">BEGIN</span>;
+
+<span class="sql-cm">-- 1. Error humano: Se intenta modificar el precio del monitor a Bs 1.00</span>
+<span class="sql-kw">UPDATE</span> <span class="sql-tbl">productos</span> <span class="sql-kw">SET</span> precio = <span class="sql-num">1.00</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Monitor'</span>;
+
+<span class="sql-cm">-- 2. Durante la transacción se observa el valor erróneo de Bs 1.00</span>
+<span class="sql-kw">SELECT</span> nombre, precio <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Monitor'</span>;
+
+<span class="sql-cm">-- 3. Detectamos la anomalía y cancelamos la operación</span>
+<span class="sql-tcl">ROLLBACK</span>;
+
+<span class="sql-cm">-- 4. Verificación: El monitor vuelve a su valor original de Bs 1045.00</span>
+<span class="sql-kw">SELECT</span> nombre, precio <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Monitor'</span>;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-8">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-8">
+            <img class="custom-img-preview" id="preview-slide-8" alt="Vista previa">
+            
+            <div class="ph-icon" style="color:var(--accent-rose); background:rgba(244,63,94,0.1);">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span class="ph-badge" style="color:var(--accent-rose); background:rgba(244,63,94,0.15);">pgAdmin 4 • Data Output</span>
+            <h4 class="ph-title">[Espacio para Imagen: Monitor preservado en Bs 1045.00]</h4>
+            <p class="ph-description">Captura del Data Output mostrando que tras ejecutar <code>ROLLBACK</code>, el precio del Monitor jamás se alteró y se mantiene en Bs 1045.00.</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-8').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-8')">Ver Resultado Simulado</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-8">
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th><th>precio<span>numeric(10,2)</span></th><th>estado</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>Monitor</td><td>1045.00</td><td style="color:var(--accent-rose); font-weight:700;">Restaurado por ROLLBACK</td></tr>
+                </tbody>
+              </table>
+              <div style="padding: 0.5rem; font-size: 0.72rem; color: #94a3b8;">
+                * En memoria temporal se leyó Bs 1.00, pero al descartar el bloque el valor definitivo es Bs 1045.00.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 9: EJERCICIO 4 - UTILIZAR SAVEPOINT
+           ============================================================== -->
+      <section class="slide" data-index="9" data-title="Ejercicio 4: Control con SAVEPOINT">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 4 • Puntos de Control</div>
+            <h2 class="slide-h2">Reversión Parcial mediante SAVEPOINT</h2>
+            <p class="slide-lead">Deshacer únicamente una sub-operación defectuosa sin perder los cambios correctos previos.</p>
+          </div>
+          <span class="tech-pill purple">Punto de Control</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio4_savepoint.sql</div>
+              <button class="btn-copy" data-target="code-slide-9">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-9"><code><span class="sql-tcl">BEGIN</span>;
+
+<span class="sql-cm">-- 1. Modificación correcta: Incrementamos stock del Mouse (+5)</span>
+<span class="sql-kw">UPDATE</span> <span class="sql-tbl">productos</span> <span class="sql-kw">SET</span> stock = stock + <span class="sql-num">5</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Mouse'</span>;
+
+<span class="sql-cm">-- 2. Establecemos un punto de restauración seguro</span>
+<span class="sql-tcl">SAVEPOINT</span> <span class="sql-col">antes_del_segundo_cambio</span>;
+
+<span class="sql-cm">-- 3. Modificación no deseada: Ponemos en 0 el stock del USB</span>
+<span class="sql-kw">UPDATE</span> <span class="sql-tbl">productos</span> <span class="sql-kw">SET</span> stock = <span class="sql-num">0</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Memoria USB'</span>;
+
+<span class="sql-cm">-- 4. Revertimos SOLO el cambio erróneo volviendo al savepoint</span>
+<span class="sql-tcl">ROLLBACK TO SAVEPOINT</span> <span class="sql-col">antes_del_segundo_cambio</span>;
+
+<span class="sql-cm">-- 5. Confirmamos la transacción (conservando el +5 del Mouse)</span>
+<span class="sql-tcl">COMMIT</span>;
+
+<span class="sql-kw">SELECT</span> nombre, stock <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span>
+<span class="sql-kw">WHERE</span> nombre <span class="sql-kw">IN</span> (<span class="sql-str">'Mouse'</span>, <span class="sql-str">'Memoria USB'</span>) <span class="sql-kw">ORDER BY</span> nombre;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-9">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-9">
+            <img class="custom-img-preview" id="preview-slide-9" alt="Vista previa">
+            
+            <div class="ph-icon" style="color:var(--accent-purple); background:rgba(168,85,247,0.1);">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            </div>
+            <span class="ph-badge" style="color:var(--accent-purple); background:rgba(168,85,247,0.15);">pgAdmin 4 • Query History & Output</span>
+            <h4 class="ph-title">[Espacio para Imagen: Query History y Resultado SAVEPOINT]</h4>
+            <p class="ph-description">Captura de pgAdmin 4 mostrando el historial de sentencias (ROLLBACK TO SAVEPOINT, COMMIT) y la tabla con Mouse = 35 y Memoria USB = 25.</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-9').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-9')">Ver Resultado Simulado</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-9">
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th><th>stock<span>integer</span></th><th>diagnóstico</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>Memoria USB</td><td>25</td><td style="color:var(--accent-cyan);">Conserva 25 (anulado stock 0)</td></tr>
+                  <tr><td class="row-num">2</td><td>Mouse</td><td>35</td><td style="color:var(--accent-emerald);">Aumentó a 35 (30 + 5)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 10: EJERCICIO 5 - ANÁLISIS CON SUBCONSULTAS
+           ============================================================== -->
+      <section class="slide" data-index="10" data-title="Ejercicio 5: Subconsultas de Análisis">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 5 • Consultas Analíticas</div>
+            <h2 class="slide-h2">Análisis de Datos con Subconsultas y Cláusula EXISTS</h2>
+            <p class="slide-lead">Extracción de productos con precio superior al promedio y clientes con ventas efectivas.</p>
+          </div>
+          <span class="tech-pill amber">Subconsultas Escalares y Correlacionadas</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio5_analisis.sql</div>
+              <button class="btn-copy" data-target="code-slide-10">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-10"><code><span class="sql-cm">-- 1. Productos cuyo precio supera el promedio general</span>
+<span class="sql-kw">SELECT</span> nombre, precio <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span>
+<span class="sql-kw">WHERE</span> precio > (
+  <span class="sql-kw">SELECT</span> <span class="sql-fn">AVG</span>(precio) <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span>
+);
+
+<span class="sql-cm">-- 2. Clientes con al menos una venta registrada (EXISTS)</span>
+<span class="sql-kw">SELECT</span> c.nombre <span class="sql-kw">FROM</span> <span class="sql-tbl">clientes</span> c
+<span class="sql-kw">WHERE</span> <span class="sql-fn">EXISTS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-num">1</span> <span class="sql-kw">FROM</span> <span class="sql-tbl">ventas</span> v <span class="sql-kw">WHERE</span> v.id_cliente = c.id_cliente
+);</code></pre>
+          </div>
+
+          <!-- Dos Espacios para Imágenes -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Imagen 1: AVG -->
+            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+              <span class="ph-badge">pgAdmin 4 • Subconsulta Escalar AVG</span>
+              <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Productos > Promedio]</h5>
+              <p class="ph-description" style="font-size: 0.72rem;">Resultado mostrando únicamente al <strong>Monitor (Bs 1045.00)</strong> como artículo por encima de la media.</p>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-10a')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Resultado Promedio</button>
+              
+              <div class="pgadmin-table-container" id="table-sim-10a">
+                <table class="pgadmin-table">
+                  <thead>
+                    <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th><th>precio<span>numeric(10,2)</span></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="row-num">1</td><td>Monitor</td><td>1045.00</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Imagen 2: EXISTS -->
+            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+              <span class="ph-badge">pgAdmin 4 • Subconsulta Correlacionada EXISTS</span>
+              <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Clientes con Venta]</h5>
+              <p class="ph-description" style="font-size: 0.72rem;">Resultado mostrando a <strong>Ana Pérez</strong> como la única clienta con ventas hasta este punto.</p>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-10b')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Resultado EXISTS</button>
+              
+              <div class="pgadmin-table-container" id="table-sim-10b">
+                <table class="pgadmin-table">
+                  <thead>
+                    <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="row-num">1</td><td>Ana Pérez</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 11: EJERCICIO 6 - ELIMINACIÓN CONTROLADA
+           ============================================================== -->
+      <section class="slide" data-index="11" data-title="Ejercicio 6: Eliminación Controlada">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 6 • DML Seguro</div>
+            <h2 class="slide-h2">Eliminación Controlada con Cláusula NOT EXISTS</h2>
+            <p class="slide-lead">Protocolo de seguridad: Inspección selectiva previa antes de ejecutar DELETE para preservar la integridad referencial.</p>
+          </div>
+          <span class="tech-pill" style="color:var(--accent-rose); border-color:rgba(244,63,94,0.3); background:rgba(244,63,94,0.1);">DELETE Protegido</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio6_delete_controlado.sql</div>
+              <button class="btn-copy" data-target="code-slide-11">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-11"><code><span class="sql-tcl">BEGIN</span>;
+
+<span class="sql-cm">-- Paso 1: Comprobación previa. Verificamos quién cumple la condición</span>
+<span class="sql-kw">SELECT</span> c.id_cliente, c.nombre <span class="sql-kw">FROM</span> <span class="sql-tbl">clientes</span> c
+<span class="sql-kw">WHERE NOT EXISTS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-num">1</span> <span class="sql-kw">FROM</span> <span class="sql-tbl">ventas</span> v <span class="sql-kw">WHERE</span> v.id_cliente = c.id_cliente
+) <span class="sql-kw">AND</span> c.nombre = <span class="sql-str">'Luis Rojas'</span>;
+
+<span class="sql-cm">-- Paso 2: Eliminación con exactamente la misma condición verificada</span>
+<span class="sql-kw">DELETE FROM</span> <span class="sql-tbl">clientes</span> c
+<span class="sql-kw">WHERE</span> c.nombre = <span class="sql-str">'Luis Rojas'</span>
+<span class="sql-kw">AND NOT EXISTS</span> (
+  <span class="sql-kw">SELECT</span> <span class="sql-num">1</span> <span class="sql-kw">FROM</span> <span class="sql-tbl">ventas</span> v <span class="sql-kw">WHERE</span> v.id_cliente = c.id_cliente
+);
+
+<span class="sql-cm">-- Paso 3: Verificación de permanencia de Ana y María</span>
+<span class="sql-kw">SELECT</span> * <span class="sql-kw">FROM</span> <span class="sql-tbl">clientes</span> <span class="sql-kw">ORDER BY</span> id_cliente;
+
+<span class="sql-tcl">COMMIT</span>;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-11">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-11">
+            <img class="custom-img-preview" id="preview-slide-11" alt="Vista previa">
+            
+            <div class="ph-icon" style="color:var(--accent-rose); background:rgba(244,63,94,0.1);">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <span class="ph-badge">pgAdmin 4 • Data Output</span>
+            <h4 class="ph-title">[Espacio para Imagen: Clientes tras DELETE]</h4>
+            <p class="ph-description">Captura de pgAdmin 4 mostrando que <strong>Luis Rojas ha sido eliminado</strong> y la tabla conserva únicamente a <code>Ana Pérez</code> (id 1) y <code>María Flores</code> (id 3).</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-11').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-11')">Ver Tabla Simulada</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-11">
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>id_cliente<span>[PK] integer</span></th><th>nombre<span>character varying(100)</span></th><th>ciudad<span>character varying(60)</span></th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>1</td><td>Ana Pérez</td><td>Santa Cruz</td></tr>
+                  <tr><td class="row-num">2</td><td>3</td><td>María Flores</td><td>Santa Cruz</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 12: EJERCICIO 7 - TRANSACCIÓN SEGURA PARA DESCONTAR STOCK
+           ============================================================== -->
+      <section class="slide" data-index="12" data-title="Ejercicio 7: Transacción Segura Stock">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Ejercicio 7 • Patrón Industrial Avanzado</div>
+            <h2 class="slide-h2">Transacción Segura y Atómica para Descontar Stock</h2>
+            <p class="slide-lead">Validar existencias y descontar con UPDATE ... RETURNING antes de autorizar la emisión de la venta.</p>
+          </div>
+          <span class="tech-pill emerald">Stock Atómico</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">ejercicio7_transaccion_segura.sql</div>
+              <button class="btn-copy" data-target="code-slide-12">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-12"><code><span class="sql-tcl">BEGIN</span>;
+
+<span class="sql-cm">-- 1. Primero intentamos descontar el stock con condición estricta</span>
+<span class="sql-kw">WITH</span> <span class="sql-col">descontado</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">UPDATE</span> <span class="sql-tbl">productos</span>
+  <span class="sql-kw">SET</span> stock = stock - <span class="sql-num">3</span>
+  <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Mouse'</span> <span class="sql-kw">AND</span> stock >= <span class="sql-num">3</span>
+  <span class="sql-kw">RETURNING</span> id_producto, precio
+),
+<span class="sql-cm">-- 2. Solamente si el descuento generó una fila, creamos la venta</span>
+<span class="sql-col">nueva_venta</span> <span class="sql-kw">AS</span> (
+  <span class="sql-kw">INSERT INTO</span> <span class="sql-tbl">ventas</span> (id_cliente)
+  <span class="sql-kw">SELECT</span> c.id_cliente <span class="sql-kw">FROM</span> <span class="sql-tbl">clientes</span> c
+  <span class="sql-kw">WHERE</span> c.nombre = <span class="sql-str">'María Flores'</span>
+    <span class="sql-kw">AND EXISTS</span> (<span class="sql-kw">SELECT</span> <span class="sql-num">1</span> <span class="sql-kw">FROM</span> <span class="sql-col">descontado</span>)
+  <span class="sql-kw">RETURNING</span> id_venta
+)
+<span class="sql-cm">-- 3. Detallamos la venta utilizando los valores devueltos</span>
+<span class="sql-kw">INSERT INTO</span> <span class="sql-tbl">detalle_venta</span> (id_venta, id_producto, cantidad, precio_unitario)
+<span class="sql-kw">SELECT</span> v.id_venta, d.id_producto, <span class="sql-num">3</span>, d.precio
+<span class="sql-kw">FROM</span> <span class="sql-col">nueva_venta</span> v <span class="sql-kw">CROSS JOIN</span> <span class="sql-col">descontado</span> d;
+
+<span class="sql-kw">SELECT</span> nombre, stock <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">WHERE</span> nombre = <span class="sql-str">'Mouse'</span>;
+
+<span class="sql-tcl">COMMIT</span>;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-12">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-12">
+            <img class="custom-img-preview" id="preview-slide-12" alt="Vista previa">
+            
+            <div class="ph-icon">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <span class="ph-badge">pgAdmin 4 • Data Output</span>
+            <h4 class="ph-title">[Espacio para Imagen: Venta María Flores y Stock Mouse = 32]</h4>
+            <p class="ph-description">Captura de la consulta final: Venta #2 asignada a María Flores con 3 Mouse a Bs 88.00 (Total Bs 264.00) y stock de Mouse reducido de 35 a 32.</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-12').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-12')">Ver Resultado Simulado</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-12">
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>id_venta</th><th>nombre</th><th>producto</th><th>cantidad</th><th>precio_unitario</th><th>total_bs</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>2</td><td>María Flores</td><td>Mouse</td><td>3</td><td>88.00</td><td style="color:var(--accent-emerald); font-weight:700;">264.00</td></tr>
+                </tbody>
+              </table>
+              <div style="padding: 0.5rem; font-size: 0.7rem; color: #94a3b8;">
+                * Stock final de Mouse: 32 unidades. Si no hubiese existido stock (stock < 3), no se habría emitido la venta.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 13: COMPROBACIÓN FINAL
+           ============================================================== -->
+      <section class="slide" data-index="13" data-title="Comprobación Final">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Auditoría y Cierre</div>
+            <h2 class="slide-h2">Comprobación General de Ventas e Inventario</h2>
+            <p class="slide-lead">Consulta consolidada con JOIN, LEFT JOIN, SUM y COALESCE para certificar la consistencia del sistema.</p>
+          </div>
+          <span class="tech-pill emerald">Auditoría Exitosa</span>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Terminal SQL -->
+          <div class="code-terminal">
+            <div class="terminal-topbar">
+              <div class="terminal-controls">
+                <span class="term-dot red"></span>
+                <span class="term-dot yellow"></span>
+                <span class="term-dot green"></span>
+              </div>
+              <div class="terminal-title">13_comprobacion_final.sql</div>
+              <button class="btn-copy" data-target="code-slide-13">
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copiar</span>
+              </button>
+            </div>
+            <pre class="code-body" id="code-slide-13"><code><span class="sql-cm">-- 1. Resumen consolidado de todas las ventas emitidas</span>
+<span class="sql-kw">SELECT</span> 
+  v.id_venta, 
+  c.nombre <span class="sql-kw">AS</span> cliente, 
+  v.fecha,
+  <span class="sql-fn">COALESCE</span>(<span class="sql-fn">SUM</span>(d.cantidad * d.precio_unitario), <span class="sql-num">0</span>) <span class="sql-kw">AS</span> total_bs
+<span class="sql-kw">FROM</span> <span class="sql-tbl">ventas</span> v
+<span class="sql-kw">JOIN</span> <span class="sql-tbl">clientes</span> c <span class="sql-kw">ON</span> c.id_cliente = v.id_cliente
+<span class="sql-kw">LEFT JOIN</span> <span class="sql-tbl">detalle_venta</span> d <span class="sql-kw">ON</span> d.id_venta = v.id_venta
+<span class="sql-kw">GROUP BY</span> v.id_venta, c.nombre, v.fecha
+<span class="sql-kw">ORDER BY</span> v.id_venta;
+
+<span class="sql-cm">-- 2. Estado definitivo del inventario de productos</span>
+<span class="sql-kw">SELECT</span> nombre, precio, stock <span class="sql-kw">FROM</span> <span class="sql-tbl">productos</span> <span class="sql-kw">ORDER BY</span> id_producto;</code></pre>
+          </div>
+
+          <!-- Espacio para Imagen del PDF -->
+          <div class="image-placeholder-box" id="box-slide-13">
+            <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-13">
+            <img class="custom-img-preview" id="preview-slide-13" alt="Vista previa">
+            
+            <div class="ph-icon">
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <span class="ph-badge">pgAdmin 4 • Data Output Final</span>
+            <h4 class="ph-title">[Espacio para Imagen: Catálogo Final de Productos]</h4>
+            <p class="ph-description">Captura de la tabla definitiva de productos en pgAdmin: Teclado (120.00 / stock 18), Mouse (88.00 / stock 32), Monitor (1045.00 / stock 10) y Memoria USB (66.00 / stock 25).</p>
+            
+            <div class="ph-actions">
+              <button class="ph-btn" onclick="document.getElementById('file-slide-13').click()">Insertar Captura</button>
+              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-13')">Ver Tabla Final Simulada</button>
+            </div>
+
+            <div class="pgadmin-table-container" id="table-sim-13">
+              <table class="pgadmin-table">
+                <thead>
+                  <tr><th class="row-num">#</th><th>nombre<span>character varying(100)</span></th><th>precio<span>numeric(10,2)</span></th><th>stock<span>integer</span></th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="row-num">1</td><td>Teclado</td><td>120.00</td><td>18</td></tr>
+                  <tr><td class="row-num">2</td><td>Mouse</td><td>88.00</td><td>32</td></tr>
+                  <tr><td class="row-num">3</td><td>Monitor</td><td>1045.00</td><td>10</td></tr>
+                  <tr><td class="row-num">4</td><td>Memoria USB</td><td>66.00</td><td>25</td></tr>
+                </tbody>
+              </table>
+              <div style="padding: 0.5rem; font-size: 0.7rem; color: var(--accent-emerald);">
+                ✓ Coherencia absoluta verificada: Ni una sola venta incompleta ni desbalance de existencias.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 14: RECOMENDACIONES Y CONCLUSIONES
+           ============================================================== -->
+      <section class="slide" data-index="14" data-title="Recomendaciones y Conclusiones">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Síntesis y Buenas Prácticas</div>
+            <h2 class="slide-h2">Recomendaciones Profesionales y Conclusiones</h2>
+            <p class="slide-lead">Lecciones aprendidas sobre gestión transaccional segura en entornos de producción.</p>
+          </div>
+          <span class="tech-pill emerald">Buenas Prácticas</span>
+        </div>
+
+        <div class="grid-2col-equal">
+          <!-- Tarjeta Recomendaciones -->
+          <div class="card" style="border-color: rgba(56, 189, 248, 0.3);">
+            <div class="card-icon">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <h3 class="card-title">Recomendaciones para Evitar Errores</h3>
+            <ul style="padding-left: 1.2rem; font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-top: 0.6rem;">
+              <li><strong>Pre-validación con SELECT:</strong> Antes de lanzar un <code>UPDATE</code> o <code>DELETE</code>, ejecutar un <code>SELECT</code> con exactamente la misma condición <code>WHERE</code> para auditar las filas afectadas.</li>
+              <li><strong>Encapsulamiento Explícito:</strong> Trabajar siempre dentro de bloques <code>BEGIN ... COMMIT</code> al manipular datos de negocio críticos.</li>
+              <li><strong>Manejo de Transacciones Abortadas:</strong> En PostgreSQL, cualquier fallo de sintaxis o restricción deja la transacción en estado abortado (<em>aborted transaction</em>), requiriendo un <code>ROLLBACK</code> forzoso antes de reanudar.</li>
+              <li><strong>Verificación de Retorno:</strong> Garantizar que las deducciones de stock se hayan efectuado realmente con <code>RETURNING</code> antes de persistir la cabecera de venta.</li>
+            </ul>
+          </div>
+
+          <!-- Tarjeta Conclusiones -->
+          <div class="card" style="border-color: rgba(16, 185, 129, 0.3);">
+            <div class="card-icon emerald">
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="card-title">Conclusiones de la Práctica</h3>
+            <p class="card-text">
+              La manipulación de bases de datos relacionales no consiste meramente en insertar o borrar registros, sino en <strong>garantizar que la operación global tenga sentido de negocio y preserve el estado consistente del sistema</strong>.
+            </p>
+            <p class="card-text" style="margin-top: 0.8rem;">
+              Con <code>COMMIT</code> confirmamos cambios atómicos; con <code>ROLLBACK</code> prevenimos catástrofes ante errores imprevistos; y con <code>SAVEPOINT</code> ganamos flexibilidad granular para aislar fallas sin perder el progreso anterior. Las subconsultas demuestran ser un instrumento idóneo para modular cambios dinámicos y seguros.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================================
+           SLIDE 15: REFERENCIAS BIBLIOGRÁFICAS
+           ============================================================== -->
+      <section class="slide" data-index="15" data-title="Referencias APA 7">
+        <div class="slide-title-bar">
+          <div class="slide-title-group">
+            <div class="slide-category">Normas APA 7ma Edición</div>
+            <h2 class="slide-h2">Referencias Bibliográficas y Fuentes</h2>
+            <p class="slide-lead">Documentación técnica oficial y guías institucionales consultadas para la realización de la práctica.</p>
+          </div>
+          <span class="tech-pill purple">Bibliografía</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1.2rem; flex: 1; justify-content: center; max-width: 900px; margin: 0 auto; width: 100%;">
+          <!-- Ref 1 -->
+          <div class="card" style="padding: 1.2rem 1.6rem;">
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <span class="tech-pill" style="font-size: 0.7rem;">DML Oficial</span>
+              <div>
+                <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.5;">
+                  PostgreSQL Global Development Group. (s. f.-a). <em>Data manipulation</em>. PostgreSQL documentation.
+                </p>
+                <a href="https://www.postgresql.org/docs/current/dml.html" target="_blank" style="color: var(--accent-cyan); font-size: 0.82rem; font-family: var(--font-mono); text-decoration: none; display: inline-block; margin-top: 0.3rem;">
+                  https://www.postgresql.org/docs/current/dml.html ↗
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ref 2 -->
+          <div class="card" style="padding: 1.2rem 1.6rem;">
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <span class="tech-pill emerald" style="font-size: 0.7rem;">Transacciones</span>
+              <div>
+                <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.5;">
+                  PostgreSQL Global Development Group. (s. f.-b). <em>Transactions</em>. PostgreSQL documentation.
+                </p>
+                <a href="https://www.postgresql.org/docs/current/tutorial-transactions.html" target="_blank" style="color: var(--accent-cyan); font-size: 0.82rem; font-family: var(--font-mono); text-decoration: none; display: inline-block; margin-top: 0.3rem;">
+                  https://www.postgresql.org/docs/current/tutorial-transactions.html ↗
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ref 3 -->
+          <div class="card" style="padding: 1.2rem 1.6rem;">
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <span class="tech-pill purple" style="font-size: 0.7rem;">Institucional UPDS</span>
+              <div>
+                <p style="font-size: 0.92rem; color: var(--text-main); line-height: 1.5;">
+                  Universidad Privada Domingo Savio. (s. f.). <em>Guía práctica: Estilo APA séptima edición</em> [Guía institucional]. Santa Cruz de la Sierra, Bolivia.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nota de Agradecimiento -->
+          <div style="text-align: center; margin-top: 1rem;">
+            <span style="font-family: var(--font-heading); font-size: 0.9rem; color: var(--text-dim);">
+              Desarrollado para la Actividad Académica IV • Carrera de Ingeniería de Sistemas • 2026
+            </span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER INFERIOR CON CONTROLES Y PROGRESO -->
+    <footer class="deck-footer">
+      <!-- Barra de Progreso Interactiva -->
+      <div class="progress-track" id="progressTrack" title="Haz clic en la barra para navegar">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- Controles de Navegación -->
+      <div class="footer-controls">
+        <div class="nav-btn-group">
+          <!-- Botón Anterior -->
+          <button class="nav-btn" id="btnPrev" title="Diapositiva anterior (Flecha Izquierda / PageUp)">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Anterior
+          </button>
+
+          <!-- Indicador Numérico de Diapositiva -->
+          <div class="slide-counter-badge" id="slideIndicator" title="Abrir cuadrícula de diapositivas">
+            <span id="currentSlideNum">01</span> / <span id="totalSlidesNum">15</span>
+          </div>
+
+          <!-- Botón Siguiente -->
+          <button class="nav-btn primary" id="btnNext" title="Diapositiva siguiente (Flecha Derecha / Espacio)">
+            Siguiente
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="keyboard-hint">
+          <span>Navegación:</span>
+          <kbd class="key-badge">←</kbd>
+          <kbd class="key-badge">→</kbd>
+          <kbd class="key-badge">Espacio</kbd>
+          <span>|</span>
+          <kbd class="key-badge">M</kbd> <span>Resumen</span>
+          <span>|</span>
+          <kbd class="key-badge">F</kbd> <span>Pantalla Completa</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- MODAL DE RESUMEN / CUADRÍCULA DE DIAPOSITIVAS (OVERVIEW) -->
+  <div class="overview-modal" id="overviewModal">
+    <div class="overview-content">
+      <div class="overview-header">
+        <div>
+          <h3 style="font-family: var(--font-heading); font-size: 1.4rem; color: var(--text-main);">Índice de Diapositivas</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Selecciona cualquier diapositiva para saltar directamente a ella.</p>
+        </div>
+        <button class="icon-btn" id="btnCloseOverview">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="overview-grid" id="overviewGrid">
+        <!-- Generado dinámicamente por JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE AYUDA DE TECLADO -->
+  <div class="help-modal" id="helpModal">
+    <div class="help-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-main);">Atajos de Teclado</h3>
+        <button class="icon-btn" id="btnCloseHelp">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="shortcuts-list">
+        <div class="shortcut-row">
+          <span>Avanzar Diapositiva</span>
+          <div><kbd class="key-badge">→</kbd> <kbd class="key-badge">Espacio</kbd> <kbd class="key-badge">AvPág</kbd></div>
+        </div>
+        <div class="shortcut-row">
+          <span>Retroceder Diapositiva</span>
+          <div><kbd class="key-badge">←</kbd> <kbd class="key-badge">RePág</kbd></div>
+        </div>
+        <div class="shortcut-row">
+          <span>Primera / Última Diapositiva</span>
+          <div><kbd class="key-badge">Inicio</kbd> <kbd class="key-badge">Fin</kbd></div>
+        </div>
+        <div class="shortcut-row">
+          <span>Cuadrícula / Resumen</span>
+          <kbd class="key-badge">M</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Cambiar Tema (Claro / Oscuro)</span>
+          <kbd class="key-badge">T</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Modo Pantalla Completa</span>
+          <kbd class="key-badge">F</kbd>
+        </div>
+        <div class="shortcut-row">
+          <span>Cerrar Modales</span>
+          <kbd class="key-badge">Escape</kbd>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICACIÓN (CLIPBOARD) -->
+  <div class="toast-notification" id="toast">¡Código copiado al portapapeles!</div>
+
+  <!-- ==========================================================================
+       LÓGICA JAVASCRIPT VANILLA
+       Manejo de Diapositivas, Atajos, Copiado, Modales y Carga de Imágenes
+       ========================================================================== -->
+  <script>
+    (function() {
+      'use strict';
+
+      // Selección de Elementos del DOM
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const totalSlides = slides.length;
+      let currentIndex = 0;
+
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const currentSlideNum = document.getElementById('currentSlideNum');
+      const totalSlidesNum = document.getElementById('totalSlidesNum');
+      const progressBar = document.getElementById('progressBar');
+      const progressTrack = document.getElementById('progressTrack');
+      const slideIndicator = document.getElementById('slideIndicator');
+
+      const btnThemeToggle = document.getElementById('btnThemeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const btnFullscreen = document.getElementById('btnFullscreen');
+      
+      const overviewModal = document.getElementById('overviewModal');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const btnOverview = document.getElementById('btnOverview');
+      const btnCloseOverview = document.getElementById('btnCloseOverview');
+
+      const helpModal = document.getElementById('helpModal');
+      const btnHelp = document.getElementById('btnHelp');
+      const btnCloseHelp = document.getElementById('btnCloseHelp');
+      const toast = document.getElementById('toast');
+
+      // Inicialización
+      totalSlidesNum.textContent = String(totalSlides).padStart(2, '0');
+
+      // Función para Mostrar Toast
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+      }
+
+      // Función Principal de Navegación de Diapositivas
+      function goToSlide(index) {
+        if (index < 0 || index >= totalSlides) return;
+        
+        slides.forEach((slide, i) => {
+          slide.classList.remove('active', 'prev-slide');
+          if (i === index) {
+            slide.classList.add('active');
+          } else if (i < index) {
+            slide.classList.add('prev-slide');
+          }
+        });
+
+        currentIndex = index;
+        
+        // Actualizar UI
+        currentSlideNum.textContent = String(currentIndex + 1).padStart(2, '0');
+        const progressPercentage = ((currentIndex + 1) / totalSlides) * 100;
+        progressBar.style.width = `${progressPercentage}%`;
+
+        // Botones deshabilitados en bordes
+        btnPrev.disabled = (currentIndex === 0);
+        btnNext.disabled = (currentIndex === totalSlides - 1);
+
+        // Actualizar thumb activo en modal de overview si está abierto
+        updateOverviewActiveState();
+      }
+
+      // Eventos de botones
+      btnPrev.addEventListener('click', () => goToSlide(currentIndex - 1));
+      btnNext.addEventListener('click', () => goToSlide(currentIndex + 1));
+
+      // Clic en la barra de progreso para saltar
+      progressTrack.addEventListener('click', (e) => {
+        const rect = progressTrack.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const ratio = clickX / rect.width;
+        const targetIndex = Math.floor(ratio * totalSlides);
+        goToSlide(Math.min(Math.max(targetIndex, 0), totalSlides - 1));
+      });
+
+      // Navegación con Teclado
+      window.addEventListener('keydown', (e) => {
+        // Si hay un modal abierto y presiona Escape, cerrarlo
+        if (e.key === 'Escape') {
+          overviewModal.classList.remove('open');
+          helpModal.classList.remove('open');
+          return;
+        }
+
+        // Si se está escribiendo en un input, ignorar
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch(e.key) {
+          case 'ArrowRight':
+          case ' ':
+          case 'PageDown':
+            e.preventDefault();
+            goToSlide(currentIndex + 1);
+            break;
+          case 'ArrowLeft':
+          case 'PageUp':
+            e.preventDefault();
+            goToSlide(currentIndex - 1);
+            break;
+          case 'Home':
+            e.preventDefault();
+            goToSlide(0);
+            break;
+          case 'End':
+            e.preventDefault();
+            goToSlide(totalSlides - 1);
+            break;
+          case 'f':
+          case 'F':
+            e.preventDefault();
+            toggleFullscreen();
+            break;
+          case 't':
+          case 'T':
+            e.preventDefault();
+            toggleTheme();
+            break;
+          case 'm':
+          case 'M':
+            e.preventDefault();
+            toggleOverview();
+            break;
+          case 'h':
+          case 'H':
+          case '?':
+            e.preventDefault();
+            toggleHelp();
+            break;
+        }
+      });
+
+      // Modo Claro / Oscuro (Dark / Light Theme Toggle)
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        
+        // Actualizar icono
+        if (newTheme === 'light') {
+          themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
+          showToast('Modo Claro activado');
+        } else {
+          themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />`;
+          showToast('Modo Oscuro activado');
+        }
+      }
+      btnThemeToggle.addEventListener('click', toggleTheme);
+
+      // Pantalla Completa (Fullscreen API)
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.error(`Error al activar pantalla completa: ${err.message}`);
+          });
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+      btnFullscreen.addEventListener('click', toggleFullscreen);
+
+      // Modal de Resumen (Overview Grid)
+      function populateOverview() {
+        overviewGrid.innerHTML = '';
+        slides.forEach((slide, index) => {
+          const title = slide.getAttribute('data-title') || `Diapositiva ${index + 1}`;
+          const card = document.createElement('div');
+          card.className = `overview-card ${index === currentIndex ? 'active-thumb' : ''}`;
+          card.innerHTML = `
+            <span class="overview-card-num">SLIDE ${String(index + 1).padStart(2, '0')}</span>
+            <span class="overview-card-title">${title}</span>
+          `;
+          card.addEventListener('click', () => {
+            goToSlide(index);
+            overviewModal.classList.remove('open');
+          });
+          overviewGrid.appendChild(card);
+        });
+      }
+
+      function updateOverviewActiveState() {
+        const cards = overviewGrid.querySelectorAll('.overview-card');
+        cards.forEach((card, idx) => {
+          if (idx === currentIndex) {
+            card.classList.add('active-thumb');
+          } else {
+            card.classList.remove('active-thumb');
+          }
+        });
+      }
+
+      function toggleOverview() {
+        populateOverview();
+        overviewModal.classList.toggle('open');
+      }
+
+      btnOverview.addEventListener('click', toggleOverview);
+      slideIndicator.addEventListener('click', toggleOverview);
+      btnCloseOverview.addEventListener('click', () => overviewModal.classList.remove('open'));
+
+      // Modal de Ayuda
+      function toggleHelp() {
+        helpModal.classList.toggle('open');
+      }
+      btnHelp.addEventListener('click', toggleHelp);
+      btnCloseHelp.addEventListener('click', () => helpModal.classList.remove('open'));
+
+      // Copiar Bloques de Código al Portapapeles
+      const copyButtons = document.querySelectorAll('.btn-copy');
+      copyButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-target');
+          const codeEl = document.getElementById(targetId);
+          if (codeEl) {
+            // Extraer solo texto plano
+            const textToCopy = codeEl.innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              btn.classList.add('copied');
+              btn.querySelector('span').textContent = '¡Copiado!';
+              showToast('Código SQL copiado al portapapeles');
+              setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.querySelector('span').textContent = 'Copiar';
+              }, 2000);
+            }).catch(err => {
+              console.error('Error al copiar:', err);
+            });
+          }
+        });
+      });
+
+      // Manejador para Cargar Imágenes Personalizadas (Inputs de Archivo)
+      const fileInputs = document.querySelectorAll('.file-input-hidden');
+      fileInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            const boxId = input.id.replace('file-', 'preview-');
+            const previewImg = document.getElementById(boxId);
+            
+            reader.onload = function(event) {
+              if (previewImg) {
+                previewImg.src = event.target.result;
+                previewImg.style.display = 'block';
+                showToast('Captura insertada exitosamente');
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      });
+
+      // Función Global para Alternar Tablas Simuladas de pgAdmin
+      window.toggleSimulatedTable = function(tableId) {
+        const table = document.getElementById(tableId);
+        if (table) {
+          table.classList.toggle('visible');
+        }
+      };
+
+      // Inicializar en Diapositiva 0
+      goToSlide(0);
+
+    })();
+  </script>
+</body>
+</html>
