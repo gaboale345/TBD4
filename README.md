@@ -62,4 +62,4 @@ Presentación interactiva tipo diapositiva (estilo PowerPoint/Keynote para desar
    - **Slide 12:** Ejercicio 7 - Transacción Segura Atómica para Descontar Stock.
    - **Slide 13:** Comprobación Final y Auditoría de Ventas/Inventario.
    - **Slide 14:** Recomendaciones Técnicas y Conclusiones.
-   - **Slide 15:** Referencias Bibliográficas en formato APA 7ma Edición.
+   - **Slide 15:** Cierre de Presentación (¡Muchas Gracias!).
