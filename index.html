@@ -646,6 +646,38 @@
       display: none;
     }
 
+    .btn-remove-preview {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(239, 68, 68, 0.9);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 9999px;
+      padding: 0.25rem 0.65rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      cursor: pointer;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      gap: 0.3rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: var(--transition-smooth);
+    }
+
+    .btn-remove-preview:hover {
+      background: #dc2626;
+      transform: scale(1.05);
+    }
+
+    .image-placeholder-box.drag-over {
+      border-color: var(--accent-emerald) !important;
+      background: rgba(16, 185, 129, 0.15) !important;
+      box-shadow: 0 0 25px var(--accent-emerald-glow) !important;
+    }
+
     /* Tabla pgAdmin Simulada (Data Output exacto del PDF) */
     .pgadmin-table-container {
       width: 100%;
@@ -1498,11 +1530,24 @@
           <!-- Dos Espacios para Imágenes del PDF -->
           <div style="display: flex; flex-direction: column; gap: 1rem;">
             <!-- Imagen 1: Clientes -->
-            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+            <div class="image-placeholder-box" id="box-slide-5a" style="min-height: 150px; padding: 1rem;">
+              <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-5a">
+              <img class="custom-img-preview" id="preview-slide-5a" alt="Vista previa Clientes">
+              <button class="btn-remove-preview" id="remove-slide-5a" onclick="removeUploadedImage('slide-5a', event)" title="Quitar captura">✕ Quitar</button>
+
               <span class="ph-badge">pgAdmin 4 • Data Output</span>
               <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Tabla Clientes]</h5>
-              <p class="ph-description" style="font-size: 0.72rem;">SELECT * FROM clientes ORDER BY id_cliente (Ana Pérez, Luis Rojas, María Flores).</p>
-              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-5a')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Tabla Clientes</button>
+              <p class="ph-description" style="font-size: 0.72rem; margin-bottom: 0.5rem;">SELECT * FROM clientes ORDER BY id_cliente (Ana Pérez, Luis Rojas, María Flores).</p>
+              
+              <div class="ph-actions" style="margin-top: 0.2rem;">
+                <button class="ph-btn" onclick="document.getElementById('file-slide-5a').click()" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Insertar Captura
+                </button>
+                <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-5a')" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  Simular Tabla Clientes
+                </button>
+              </div>
               
               <div class="pgadmin-table-container" id="table-sim-5a">
                 <table class="pgadmin-table">
@@ -1519,11 +1564,24 @@
             </div>
 
             <!-- Imagen 2: Productos -->
-            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+            <div class="image-placeholder-box" id="box-slide-5b" style="min-height: 150px; padding: 1rem;">
+              <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-5b">
+              <img class="custom-img-preview" id="preview-slide-5b" alt="Vista previa Productos">
+              <button class="btn-remove-preview" id="remove-slide-5b" onclick="removeUploadedImage('slide-5b', event)" title="Quitar captura">✕ Quitar</button>
+
               <span class="ph-badge">pgAdmin 4 • Data Output</span>
               <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Tabla Productos]</h5>
-              <p class="ph-description" style="font-size: 0.72rem;">SELECT * FROM productos (Teclado 120/20, Mouse 80/30, Monitor 950/10, Memoria USB 60/25).</p>
-              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-5b')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Tabla Productos</button>
+              <p class="ph-description" style="font-size: 0.72rem; margin-bottom: 0.5rem;">SELECT * FROM productos (Teclado 120/20, Mouse 80/30, Monitor 950/10, Memoria USB 60/25).</p>
+              
+              <div class="ph-actions" style="margin-top: 0.2rem;">
+                <button class="ph-btn" onclick="document.getElementById('file-slide-5b').click()" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Insertar Captura
+                </button>
+                <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-5b')" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  Simular Tabla Productos
+                </button>
+              </div>
               
               <div class="pgadmin-table-container" id="table-sim-5b">
                 <table class="pgadmin-table">
@@ -1914,11 +1972,24 @@
           <!-- Dos Espacios para Imágenes -->
           <div style="display: flex; flex-direction: column; gap: 1rem;">
             <!-- Imagen 1: AVG -->
-            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+            <div class="image-placeholder-box" id="box-slide-10a" style="min-height: 150px; padding: 1rem;">
+              <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-10a">
+              <img class="custom-img-preview" id="preview-slide-10a" alt="Vista previa Subconsulta AVG">
+              <button class="btn-remove-preview" id="remove-slide-10a" onclick="removeUploadedImage('slide-10a', event)" title="Quitar captura">✕ Quitar</button>
+
               <span class="ph-badge">pgAdmin 4 • Subconsulta Escalar AVG</span>
               <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Productos > Promedio]</h5>
-              <p class="ph-description" style="font-size: 0.72rem;">Resultado mostrando únicamente al <strong>Monitor (Bs 1045.00)</strong> como artículo por encima de la media.</p>
-              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-10a')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Resultado Promedio</button>
+              <p class="ph-description" style="font-size: 0.72rem; margin-bottom: 0.5rem;">Resultado mostrando únicamente al <strong>Monitor (Bs 1045.00)</strong> como artículo por encima de la media.</p>
+              
+              <div class="ph-actions" style="margin-top: 0.2rem;">
+                <button class="ph-btn" onclick="document.getElementById('file-slide-10a').click()" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Insertar Captura
+                </button>
+                <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-10a')" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  Simular Resultado Promedio
+                </button>
+              </div>
               
               <div class="pgadmin-table-container" id="table-sim-10a">
                 <table class="pgadmin-table">
@@ -1933,11 +2004,24 @@
             </div>
 
             <!-- Imagen 2: EXISTS -->
-            <div class="image-placeholder-box" style="min-height: 140px; padding: 1rem;">
+            <div class="image-placeholder-box" id="box-slide-10b" style="min-height: 150px; padding: 1rem;">
+              <input type="file" accept="image/*" class="file-input-hidden" style="display:none;" id="file-slide-10b">
+              <img class="custom-img-preview" id="preview-slide-10b" alt="Vista previa Clientes con Venta">
+              <button class="btn-remove-preview" id="remove-slide-10b" onclick="removeUploadedImage('slide-10b', event)" title="Quitar captura">✕ Quitar</button>
+
               <span class="ph-badge">pgAdmin 4 • Subconsulta Correlacionada EXISTS</span>
               <h5 class="ph-title" style="font-size: 0.85rem;">[Espacio para Imagen: Clientes con Venta]</h5>
-              <p class="ph-description" style="font-size: 0.72rem;">Resultado mostrando a <strong>Ana Pérez</strong> como la única clienta con ventas hasta este punto.</p>
-              <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-10b')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Simular Resultado EXISTS</button>
+              <p class="ph-description" style="font-size: 0.72rem; margin-bottom: 0.5rem;">Resultado mostrando a <strong>Ana Pérez</strong> como la única clienta con ventas hasta este punto.</p>
+              
+              <div class="ph-actions" style="margin-top: 0.2rem;">
+                <button class="ph-btn" onclick="document.getElementById('file-slide-10b').click()" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                  Insertar Captura
+                </button>
+                <button class="ph-btn" onclick="toggleSimulatedTable('table-sim-10b')" style="padding: 0.25rem 0.65rem; font-size: 0.72rem;">
+                  Simular Resultado EXISTS
+                </button>
+              </div>
               
               <div class="pgadmin-table-container" id="table-sim-10b">
                 <table class="pgadmin-table">
@@ -2669,27 +2753,84 @@
         });
       });
 
-      // Manejador para Cargar Imágenes Personalizadas (Inputs de Archivo)
+      // Manejador para Cargar Imágenes Personalizadas (Inputs de Archivo y Drag & Drop)
+      function handleImageFile(file, input) {
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        const boxId = input.id.replace('file-', 'preview-');
+        const previewImg = document.getElementById(boxId);
+        const suffix = input.id.replace('file-', '');
+        const removeBtn = document.getElementById('remove-' + suffix);
+        
+        reader.onload = function(event) {
+          if (previewImg) {
+            previewImg.src = event.target.result;
+            previewImg.style.display = 'block';
+            if (removeBtn) removeBtn.style.display = 'inline-flex';
+            showToast('Captura insertada exitosamente');
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Evento change en todos los inputs de archivo
       const fileInputs = document.querySelectorAll('.file-input-hidden');
       fileInputs.forEach(input => {
         input.addEventListener('change', (e) => {
           const file = e.target.files[0];
           if (file) {
-            const reader = new FileReader();
-            const boxId = input.id.replace('file-', 'preview-');
-            const previewImg = document.getElementById(boxId);
-            
-            reader.onload = function(event) {
-              if (previewImg) {
-                previewImg.src = event.target.result;
-                previewImg.style.display = 'block';
-                showToast('Captura insertada exitosamente');
-              }
-            };
-            reader.readAsDataURL(file);
+            handleImageFile(file, input);
           }
         });
       });
+
+      // Drag and Drop en todos los contenedores de imágenes
+      document.querySelectorAll('.image-placeholder-box').forEach(box => {
+        ['dragenter', 'dragover'].forEach(eventName => {
+          box.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            box.classList.add('drag-over');
+          }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          box.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            box.classList.remove('drag-over');
+          }, false);
+        });
+
+        box.addEventListener('drop', (e) => {
+          const dt = e.dataTransfer;
+          const files = dt.files;
+          if (files && files.length > 0) {
+            const fileInput = box.querySelector('.file-input-hidden');
+            if (fileInput) {
+              handleImageFile(files[0], fileInput);
+            }
+          }
+        }, false);
+      });
+
+      // Función Global para Quitar Capturas Cargadas
+      window.removeUploadedImage = function(idSuffix, event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        const previewImg = document.getElementById('preview-' + idSuffix);
+        const fileInput = document.getElementById('file-' + idSuffix);
+        const removeBtn = document.getElementById('remove-' + idSuffix);
+        if (previewImg) {
+          previewImg.src = '';
+          previewImg.style.display = 'none';
+        }
+        if (fileInput) fileInput.value = '';
+        if (removeBtn) removeBtn.style.display = 'none';
+        showToast('Captura removida');
+      };
 
       // Función Global para Alternar Tablas Simuladas de pgAdmin
       window.toggleSimulatedTable = function(tableId) {
